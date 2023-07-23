@@ -2,6 +2,7 @@ package org.egov.controllers;
 
 
 import org.egov.models.MDMSRequest;
+import org.egov.service.JSONValidationService;
 import org.egov.service.MDMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,14 +20,26 @@ import java.util.List;
 public class MDMSController {
     @Autowired
     private MDMSService service;
+
+    @Autowired
+    private JSONValidationService validationService;
     @RequestMapping(value = "/_create", method = RequestMethod.POST)
-    public ResponseEntity<MDMSRequest> createMasterData(@RequestBody MDMSRequest request){
+    public ResponseEntity<MDMSRequest> createMasterData(@RequestBody MDMSRequest request) {
+
+        //Validation for master data based on masterName
+        //Now done only for "department"
+        try {
+            validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
+        }
+        catch(Exception e) {
+            throw new RuntimeException(e.toString());
+        }
 
         return new ResponseEntity<>(service.saveMDMSData(request), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_search", method = RequestMethod.POST)
-    public ResponseEntity<List<MDMSRequest>> getMasterData(@RequestBody MDMSRequest request){
+    public ResponseEntity<List<MDMSRequest>> getMasterData(){
         return new ResponseEntity<>(service.getMDMSData(), HttpStatus.OK);
     }
 
@@ -37,6 +50,12 @@ public class MDMSController {
 
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSRequest> updateMasterData(@RequestBody MDMSRequest request){
+        try {
+            validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
+        }
+        catch(Exception e) {
+            throw new RuntimeException(e.toString());
+        }
         return new ResponseEntity<>(service.updateMDMSData(request), HttpStatus.OK);
     }
 

@@ -24,13 +24,17 @@ public class MDMSRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-    @NotNull
+
+    @NotNull(message = "tenantId cannot be null")
     private String tenantId;
-    @NotNull
+
+    @NotNull(message = "moduleName cannot be null")
     private String moduleName;
-    @NotNull
+
+    @NotNull(message = "masterName cannot be null")
     private String masterName;
 
+    @NotNull(message = "masterData cannot be null")
     @Type(type = "json")
     @Column(columnDefinition = "jsonb")
     private JsonNode masterData;
