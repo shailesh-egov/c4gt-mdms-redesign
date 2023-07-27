@@ -11,6 +11,7 @@ import org.hibernate.annotations.TypeDef;
 import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 
 @Data
@@ -20,7 +21,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name="Master_Data")
 @TypeDef(name = "json", typeClass = JsonType.class)
-public class MDMSRequest {
+public class MDMSRequest implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;

@@ -35,7 +35,7 @@ public class MDMSController {
             throw new RuntimeException(e.toString());
         }
 
-        return new ResponseEntity<>(service.saveMDMSData(request), HttpStatus.OK);
+        return new ResponseEntity<>(service.saveMDMSData(request), HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/_search", method = RequestMethod.POST)
