@@ -1,24 +1,21 @@
 package org.egov.controllers;
 
 
-import org.egov.models.MDMSData;
-import org.egov.models.MDMSRequest;
-import org.egov.models.MDMSResponse;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
+import org.egov.models.*;
 import org.egov.service.JSONValidationService;
 import org.egov.service.MDMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 
 
-@Controller
+@RestController
+@Slf4j
 @RequestMapping("/mdms/v1")
 public class MDMSController {
     @Autowired
@@ -26,130 +23,200 @@ public class MDMSController {
 
     @Autowired
     private JSONValidationService validationService;
+
+    private MDMSResponse buildResponse(String message,ArrayList<MDMSData> masterDataBody){
+        MDMSResponse response = new MDMSResponse();
+        response.setMessage(message);
+        response.setMasterData(masterDataBody);
+
+        return response;
+    }
     @RequestMapping(value = "/_create", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> createMasterData(@RequestBody MDMSRequest request) {
-
-        MDMSResponse response = new MDMSResponse();
+        ArrayList<MDMSData> responseBody = new ArrayList<>();
+        String message;
 
         try {
             validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
         }
         catch(Exception e) {
-            String validationErrorMessage = "Invalid request body: " + e.getMessage();
-            response.setMessage(validationErrorMessage);
+            message = "Invalid request body: " + e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
 
             return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
         }
 
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
         responseBody.add(service.saveMDMSData(request));
+        message = "Creation successful";
 
-        response.setMasterData(responseBody);
-        response.setMessage("Creation successful");
+        MDMSResponse response = buildResponse(message,responseBody);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/_search", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> getMasterData(){
-
-        MDMSResponse response = new MDMSResponse();
+        ArrayList<MDMSData> responseBody = new ArrayList<>();
+        String message;
 
         try {
-            response.setMasterData((ArrayList<MDMSData>) service.getMDMSData());
+            responseBody = (ArrayList<MDMSData>) service.getMDMSData();
         }catch (Exception e){
-            response.setMessage(e.getMessage());
+            message = e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.setMessage("All master data fetched");
+        message = "All master data fetched";
+        MDMSResponse response = buildResponse(message,responseBody);
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_search/{id}", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> getMasterDataById(@PathVariable int id){
-        MDMSResponse response = new MDMSResponse();
+        ArrayList<MDMSData> responseBody = new ArrayList<>();
+        String message;
         try{
             MDMSData result = service.getMDMSDataById(id);
 
             if (result == null) {
-                response.setMessage("Object not found by id");
+                message = "Object not found by id";
+                MDMSResponse response = buildResponse(message,responseBody);
                 return new ResponseEntity<>(response,HttpStatus.NOT_FOUND);
             }
-            ArrayList<MDMSData> responseBody = new ArrayList<>();
 
-            response.setMessage("Object found by id");
-
+            message = "Object found by id";
             responseBody.add(result);
-            response.setMasterData(responseBody);
+            MDMSResponse response = buildResponse(message,responseBody);
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch (Exception e){
-            response.setMessage(e.getMessage());
+            message = e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/_search/by/{masterName}", method = RequestMethod.POST)
+    @RequestMapping(value = "/_search/by_master_name/{masterName}", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> getMasterDataById(@PathVariable String masterName){
-        MDMSResponse response = new MDMSResponse();
+        ArrayList<MDMSData> responseBody = new ArrayList<>();
+        String message;
         try{
             MDMSData result = service.getMDMSDataByMasterName(masterName);
 
             if (result == null) {
-                response.setMessage("Object not found by master name");
+                message = "Object not found by master name";
+                MDMSResponse response = buildResponse(message,responseBody);
+
                 return new ResponseEntity<>(response,HttpStatus.NOT_FOUND);
             }
-            ArrayList<MDMSData> responseBody = new ArrayList<>();
 
-            response.setMessage("Object found by master name");
 
+            message = "Object found by master name";
             responseBody.add(result);
-            response.setMasterData(responseBody);
+            MDMSResponse response = buildResponse(message,responseBody);
 
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch (Exception e){
-            response.setMessage(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            message = e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
+            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    //returns a specific object inside master data based on a search key and  search value
+    //example for master:"department" key:"name" value:"Tax" will return this object
+    //    {
+    //        "name": "Tax",
+    //            "code": "REV",
+    //            "active": true
+    //    },
+    //Check the below link for department master data
+    //https://github.com/egovernments/works-mdms-data/blob/DEV/data/pg/common-masters/Department.json
+    @RequestMapping(value = "/_search/byKey", method = RequestMethod.POST)
+    public ResponseEntity<MDMSSearchResponse> getMasterDataObjectBySearchKey(@RequestBody SearchRequestBody requestBody){
+        MDMSSearchResponse response = new MDMSSearchResponse();
+
+        JsonNode responseBody = null;
+        String message;
+
+        try{
+            responseBody = service.getMDMSDataObjectBySearchKey(requestBody.getMasterName(),requestBody.getSearchKey(),requestBody.getSearchValue());
+        }
+        catch (Exception e){
+            message = e.getMessage();
+            response.setMessage(message);
+            log.info("message: ",message);
+            return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+        }
+        message = "Master data object found by given search key-value pair";
+        response.setMessage(message);
+        response.setMasterData(responseBody);
+
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMasterData(@RequestBody MDMSRequest request){
-        MDMSResponse response = new MDMSResponse();
+        ArrayList<MDMSData> responseBody = new ArrayList<>();
+        String message;
         try {
             validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
         }
         catch(Exception e) {
-            String validationErrorMessage = "Invalid request body: " + e.getMessage();
-            response.setMessage(validationErrorMessage);
+            message = "Invalid request body: " + e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
             return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
         }
-
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
 
         try {
             responseBody.add(service.updateMDMSData(request));
         }catch (Exception e){
-            response.setMessage(e.getMessage());
+            message = e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
+            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.setMessage("Master data updated");
-        response.setMasterData(responseBody);
+        message = "Master data updated";
+        MDMSResponse response = buildResponse(message,responseBody);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/_update/byKey", method = RequestMethod.POST)
+    public ResponseEntity<MDMSResponse> updateMasterDataObjectBySearchKey(@RequestBody UpdateRequestBody requestBody){
+        ArrayList<MDMSData> responseBody = new ArrayList<>();
+        String message;
+
+        try{
+            responseBody.add(service.updateMDMSDataObjectBySearchKey(requestBody.getMasterName(),requestBody.getSearchKey(),requestBody.getSearchValue(),requestBody.getUpdateKey(),requestBody.getUpdateValue()));
+        } catch(Exception e){
+            message = e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
+            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        message = "Master Data Object updated successfully";
+        MDMSResponse response = buildResponse(message,responseBody);
+
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_delete/{id}", method = RequestMethod.POST)
     public ResponseEntity<String> deleteMasterData(@PathVariable int id){
 
         try{
-            String result = "Master data deleted "+service.deleteMDMSData(id);
-            return new ResponseEntity<>(result, HttpStatus.OK);
+            String message = "Master data deleted "+service.deleteMDMSData(id);
+            return new ResponseEntity<>(message, HttpStatus.OK);
         }
         catch (Exception e) {
-            String result = "Master data ID not present";
-            return new ResponseEntity<>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+            String message = "Master data ID not present";
+            return new ResponseEntity<>(message,HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
