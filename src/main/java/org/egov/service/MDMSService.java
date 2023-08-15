@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.config.MDMSConfig;
+import org.egov.kafka.Producer;
 import org.egov.models.MDMSData;
+import org.egov.models.MDMSNewRequest;
 import org.egov.models.MDMSRequest;
 import org.egov.repository.MDMSRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +24,15 @@ public class MDMSService {
     @Autowired
     private MDMSRepository repository;
 
-    @CacheEvict(value = "mdmsDataCache", allEntries = true)
-    public MDMSData saveMDMSData(MDMSRequest request) {
+    @Autowired
+    private Producer producer;
 
+    @Autowired
+    private MDMSConfig config;
+
+    @CacheEvict(value = "mdmsDataCache", allEntries = true)
+    public MDMSData saveMDMSData(MDMSNewRequest newRequest) {
+        MDMSData request = newRequest.getMdmsData();
         try {
             //Appending master data to existing data using master name
             String masterName = request.getMasterName();
@@ -40,7 +49,8 @@ public class MDMSService {
                 object.setMasterName(request.getMasterName());
                 object.setMasterData(request.getMasterData());
 
-                return repository.save(object);
+                producer.push(config.getSaveMDMDSDataTopic(),newRequest);
+//                return repository.save(object);
             }
 
             //Fetching new master data to be appended

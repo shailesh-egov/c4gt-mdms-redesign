@@ -32,19 +32,19 @@ public class MDMSController {
         return response;
     }
     @RequestMapping(value = "/_create", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> createMasterData(@RequestBody MDMSRequest request) {
+    public ResponseEntity<MDMSResponse> createMasterData(@RequestBody MDMSNewRequest request) {
         ArrayList<MDMSData> responseBody = new ArrayList<>();
         String message;
 
-        try {
-            validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
-        }
-        catch(Exception e) {
-            message = "Invalid request body: " + e.getMessage();
-            MDMSResponse response = buildResponse(message,responseBody);
-
-            return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
-        }
+//        try {
+////            validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
+//        }
+//        catch(Exception e) {
+//            message = "Invalid request body: " + e.getMessage();
+//            MDMSResponse response = buildResponse(message,responseBody);
+//
+//            return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+//        }
 
         responseBody.add(service.saveMDMSData(request));
         message = "Creation successful";
