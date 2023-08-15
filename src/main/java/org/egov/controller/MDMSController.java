@@ -1,8 +1,13 @@
-package org.egov.controllers;
+package org.egov.controller;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import digit.models.coremodels.mdms.MdmsCriteriaReq;
+import digit.models.coremodels.mdms.MdmsResponse;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import org.egov.common.contract.response.ResponseInfo;
 import org.egov.models.*;
 import org.egov.service.JSONValidationService;
 import org.egov.service.MDMSService;
@@ -10,8 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Map;
 
 
 @RestController
@@ -55,6 +61,16 @@ public class MDMSController {
     }
 
     @RequestMapping(value = "/_search", method = RequestMethod.POST)
+    private ResponseEntity<?> search(@RequestBody @Valid MdmsCriteriaReq mdmsCriteriaReq) {
+        Map<String, Map<String, JSONArray>> response = service.searchMaster(mdmsCriteriaReq);
+
+        MdmsResponse mdmsResponse = new MdmsResponse();
+        mdmsResponse.setMdmsRes(response);
+
+        return new ResponseEntity<>(mdmsResponse, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/_getAll", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> getMasterData(){
         ArrayList<MDMSData> responseBody = new ArrayList<>();
         String message;
@@ -71,61 +87,6 @@ public class MDMSController {
         MDMSResponse response = buildResponse(message,responseBody);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    @RequestMapping(value = "/_search/{id}", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> getMasterDataById(@PathVariable int id){
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
-        String message;
-        try{
-            MDMSData result = service.getMDMSDataById(id);
-
-            if (result == null) {
-                message = "Object not found by id";
-                MDMSResponse response = buildResponse(message,responseBody);
-                return new ResponseEntity<>(response,HttpStatus.NOT_FOUND);
-            }
-
-            message = "Object found by id";
-            responseBody.add(result);
-            MDMSResponse response = buildResponse(message,responseBody);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-        catch (Exception e){
-            message = e.getMessage();
-            MDMSResponse response = buildResponse(message,responseBody);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/_search/by_master_name/{masterName}", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> getMasterDataById(@PathVariable String masterName){
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
-        String message;
-        try{
-            MDMSData result = service.getMDMSDataByMasterName(masterName);
-
-            if (result == null) {
-                message = "Object not found by master name";
-                MDMSResponse response = buildResponse(message,responseBody);
-
-                return new ResponseEntity<>(response,HttpStatus.NOT_FOUND);
-            }
-
-
-            message = "Object found by master name";
-            responseBody.add(result);
-            MDMSResponse response = buildResponse(message,responseBody);
-
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
-        catch (Exception e){
-            message = e.getMessage();
-            MDMSResponse response = buildResponse(message,responseBody);
-
-            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 
     //returns a specific object inside master data based on a search key and  search value
@@ -160,6 +121,7 @@ public class MDMSController {
         return new ResponseEntity<>(response,HttpStatus.OK);
     }
 
+    //This function can be removed
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMasterData(@RequestBody MDMSRequest request){
         ArrayList<MDMSData> responseBody = new ArrayList<>();
@@ -188,6 +150,7 @@ public class MDMSController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    //This function can be removed
     @RequestMapping(value = "/_update/byKey", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMasterDataObjectBySearchKey(@RequestBody UpdateRequestBody requestBody){
         ArrayList<MDMSData> responseBody = new ArrayList<>();

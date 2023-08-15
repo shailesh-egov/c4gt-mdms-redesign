@@ -1,9 +1,15 @@
 package org.egov.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.JsonPath;
+import digit.models.coremodels.mdms.MasterDetail;
+import digit.models.coremodels.mdms.MdmsCriteriaReq;
+import digit.models.coremodels.mdms.ModuleDetail;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONValue;
 import org.egov.models.MDMSData;
 import org.egov.models.MDMSRequest;
 import org.egov.repository.MDMSRepository;
@@ -11,8 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import net.minidev.json.JSONArray;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -20,6 +29,62 @@ public class MDMSService {
 
     @Autowired
     private MDMSRepository repository;
+
+    public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
+        String tenantId = mdmsCriteriaReq.getMdmsCriteria().getTenantId();
+        log.info("tenantId"+tenantId);
+        List<ModuleDetail> moduleDetails = mdmsCriteriaReq.getMdmsCriteria().getModuleDetails();
+
+        log.info("moduleDetails"+moduleDetails);
+        Map<String, Map<String, JSONArray>> responseMap = new HashMap<>();
+
+        for (ModuleDetail moduleDetail : moduleDetails) {
+            List<MasterDetail> masterDetails = moduleDetail.getMasterDetails();
+            log.info("masterDetails"+masterDetails);
+            Map<String, JSONArray> finalMasterMap = new HashMap<>();
+
+            for (MasterDetail masterDetail : masterDetails) {
+                JSONArray masterData = null;
+
+                try {
+                    //DB call
+                    masterData = getMasterDataFromDatabase(tenantId, moduleDetail.getModuleName(), masterDetail.getName());
+                } catch (Exception e) {
+                    throw new RuntimeException("Exception occurred while reading master data", e);
+                }
+
+                if (masterData == null)
+                    continue;
+
+                if (masterDetail.getFilter() != null)
+                    masterData = filterMaster(masterData, masterDetail.getFilter());
+
+                finalMasterMap.put(masterDetail.getName(), masterData);
+            }
+            responseMap.put(moduleDetail.getModuleName(), finalMasterMap);
+        }
+        return responseMap;
+    }
+
+    private JSONArray getMasterDataFromDatabase(String tenantId, String moduleName, String masterName) {
+        MDMSData data = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
+        JsonNode masterData = data.getMasterData();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonString = masterData.toString();
+
+        Object parsedObject = JSONValue.parse(jsonString);
+
+        if (parsedObject instanceof JSONArray) {
+            return (JSONArray) parsedObject;
+        } else {
+            throw new IllegalArgumentException("The parsed JSON is not an array.");
+        }
+    }
+
+    public JSONArray filterMaster(JSONArray masters, String filterExp) {
+        JSONArray filteredMasters = JsonPath.read(masters, filterExp);
+        return filteredMasters;
+    }
 
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public MDMSData saveMDMSData(MDMSRequest request) {

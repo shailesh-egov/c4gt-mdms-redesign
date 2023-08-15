@@ -5,7 +5,7 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
-import org.egov.controllers.MDMSController;
+import org.egov.controller.MDMSController;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
