@@ -89,38 +89,6 @@ public class MDMSController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    //returns a specific object inside master data based on a search key and  search value
-    //example for master:"department" key:"name" value:"Tax" will return this object
-    //    {
-    //        "name": "Tax",
-    //            "code": "REV",
-    //            "active": true
-    //    },
-    //Check the below link for department master data
-    //https://github.com/egovernments/works-mdms-data/blob/DEV/data/pg/common-masters/Department.json
-    @RequestMapping(value = "/_search/byKey", method = RequestMethod.POST)
-    public ResponseEntity<MDMSSearchResponse> getMasterDataObjectBySearchKey(@RequestBody SearchRequestBody requestBody){
-        MDMSSearchResponse response = new MDMSSearchResponse();
-
-        JsonNode responseBody = null;
-        String message;
-
-        try{
-            responseBody = service.getMDMSDataObjectBySearchKey(requestBody.getMasterName(),requestBody.getSearchKey(),requestBody.getSearchValue());
-        }
-        catch (Exception e){
-            message = e.getMessage();
-            response.setMessage(message);
-            log.info("message: ",message);
-            return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
-        }
-        message = "Master data object found by given search key-value pair";
-        response.setMessage(message);
-        response.setMasterData(responseBody);
-
-        return new ResponseEntity<>(response,HttpStatus.OK);
-    }
-
     //This function can be removed
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMasterData(@RequestBody MDMSRequest request){
@@ -148,26 +116,6 @@ public class MDMSController {
         MDMSResponse response = buildResponse(message,responseBody);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    //This function can be removed
-    @RequestMapping(value = "/_update/byKey", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> updateMasterDataObjectBySearchKey(@RequestBody UpdateRequestBody requestBody){
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
-        String message;
-
-        try{
-            responseBody.add(service.updateMDMSDataObjectBySearchKey(requestBody.getMasterName(),requestBody.getSearchKey(),requestBody.getSearchValue(),requestBody.getUpdateKey(),requestBody.getUpdateValue()));
-        } catch(Exception e){
-            message = e.getMessage();
-            MDMSResponse response = buildResponse(message,responseBody);
-
-            return new ResponseEntity<>(response,HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        message = "Master Data Object updated successfully";
-        MDMSResponse response = buildResponse(message,responseBody);
-
-        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_delete/{id}", method = RequestMethod.POST)

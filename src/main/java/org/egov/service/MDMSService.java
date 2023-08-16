@@ -1,7 +1,6 @@
 package org.egov.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
@@ -33,14 +32,16 @@ public class MDMSService {
     public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
         String tenantId = mdmsCriteriaReq.getMdmsCriteria().getTenantId();
         log.info("tenantId"+tenantId);
-        List<ModuleDetail> moduleDetails = mdmsCriteriaReq.getMdmsCriteria().getModuleDetails();
 
+        List<ModuleDetail> moduleDetails = mdmsCriteriaReq.getMdmsCriteria().getModuleDetails();
         log.info("moduleDetails"+moduleDetails);
+
         Map<String, Map<String, JSONArray>> responseMap = new HashMap<>();
 
         for (ModuleDetail moduleDetail : moduleDetails) {
             List<MasterDetail> masterDetails = moduleDetail.getMasterDetails();
             log.info("masterDetails"+masterDetails);
+
             Map<String, JSONArray> finalMasterMap = new HashMap<>();
 
             for (MasterDetail masterDetail : masterDetails) {
@@ -67,11 +68,15 @@ public class MDMSService {
     }
 
     private JSONArray getMasterDataFromDatabase(String tenantId, String moduleName, String masterName) {
-        MDMSData data = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
-        JsonNode masterData = data.getMasterData();
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonString = masterData.toString();
 
+        //Fetching master data object from database
+        MDMSData data = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
+
+        //Fetching the master data from the object
+        JsonNode masterData = data.getMasterData();
+
+        //Converting JSON-node to JSONArray for backward compatibility
+        String jsonString = masterData.toString();
         Object parsedObject = JSONValue.parse(jsonString);
 
         if (parsedObject instanceof JSONArray) {
@@ -214,53 +219,5 @@ public class MDMSService {
             log.error("Error while deleting MDMSData: " + e.getMessage(), e);
             throw new RuntimeException("Error while deleting MDMSData", e);
         }
-    }
-    public JsonNode getMDMSDataObjectBySearchKey(String masterName,String searchKey,String searchValue){
-        //search-key could be anything as per the master schema
-        //Here for department we are using "code" as key for searching
-
-        MDMSData existingMasterDataObject = getMDMSDataByMasterName(masterName);
-        if (existingMasterDataObject == null){
-            throw new RuntimeException("No master data found by master name");
-        }
-
-        JsonNode existingMasterData = existingMasterDataObject.getMasterData();
-        JsonNode requiredMasterData = null;
-
-        for (JsonNode masterDataElement : existingMasterData) {
-            if( masterDataElement.has(searchKey )&& (masterDataElement.get(searchKey).asText()).equals(searchValue)){
-                requiredMasterData = masterDataElement;
-                break;
-            }
-        }
-        if(requiredMasterData == null){
-            throw new RuntimeException("No master data object found by search key-value pair");
-        }
-        return requiredMasterData;
-    }
-
-    public MDMSData updateMDMSDataObjectBySearchKey(String masterName,String searchKey,String searchValue,String updateKey,String updateValue){
-        MDMSData existingMasterDataObject = getMDMSDataByMasterName(masterName);
-        if (existingMasterDataObject == null){
-            throw new RuntimeException("No master data found by master name");
-        }
-
-        JsonNode existingMasterData = existingMasterDataObject.getMasterData();
-        boolean updateFlag = false;
-        for (JsonNode masterDataElement : existingMasterData) {
-            if((masterDataElement.get(searchKey).asText()).equals(searchValue)){
-                if (masterDataElement instanceof ObjectNode) {
-                    // Update the value of the specified updateKey
-                    ((ObjectNode) masterDataElement).put(updateKey, updateValue);
-                    updateFlag = true;
-                    break;
-                }
-            }
-        }
-
-        if(!updateFlag){
-            throw new RuntimeException("No master data object found by search key-value pair");
-        }
-        return existingMasterDataObject;
     }
 }

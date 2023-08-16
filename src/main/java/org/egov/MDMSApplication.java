@@ -16,6 +16,9 @@ public class MDMSApplication {
 		SpringApplication.run(MDMSApplication.class, args);
 	}
 
+
+	//Just to check kafka connection
+	//Will be removed
 	@Bean
 	CommandLineRunner commandLineRunner(KafkaTemplate<String,String> kafkaTemplate){
 		return args->{

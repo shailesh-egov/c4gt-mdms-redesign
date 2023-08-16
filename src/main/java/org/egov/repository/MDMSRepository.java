@@ -9,8 +9,6 @@ import java.util.List;
 public interface MDMSRepository extends JpaRepository<MDMSData,Integer> {
     MDMSData findByMasterName(String masterName);
 
-    List<MDMSData> findByModuleName(String moduleName);
-
     MDMSData findByTenantIdAndModuleNameAndMasterName(String tenantId, String moduleName, String masterName);
 
 
