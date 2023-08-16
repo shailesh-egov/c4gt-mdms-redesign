@@ -1,4 +1,4 @@
-package org.egov.controllers;
+package org.egov.controller;
 
 import org.egov.MessageRequest;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+//This is just for checking kafka functionality will be removed
 @RestController
 @RequestMapping("mdms/v1/messages")
 public class MessageController {
