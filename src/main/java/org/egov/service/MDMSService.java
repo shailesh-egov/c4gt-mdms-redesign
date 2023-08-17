@@ -8,7 +8,10 @@ import digit.models.coremodels.mdms.MasterDetail;
 import digit.models.coremodels.mdms.MdmsCriteriaReq;
 import digit.models.coremodels.mdms.ModuleDetail;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.config.MDMSConfig;
+import org.egov.kafka.Producer;
 import org.egov.models.MDMSData;
+import org.egov.models.MDMSNewRequest;
 import org.egov.models.MDMSNewRequest;
 import org.egov.models.MDMSRequest;
 import org.egov.repository.MDMSRepository;
@@ -29,75 +32,6 @@ public class MDMSService {
     @Autowired
     private MDMSRepository repository;
 
-    @Autowired
-    private Producer producer;
-
-    @Autowired
-    private MDMSConfig config;
-
-    public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
-        String tenantId = mdmsCriteriaReq.getMdmsCriteria().getTenantId();
-        log.info("tenantId" + tenantId);
-
-        List<ModuleDetail> moduleDetails = mdmsCriteriaReq.getMdmsCriteria().getModuleDetails();
-        log.info("moduleDetails" + moduleDetails);
-
-        Map<String, Map<String, JSONArray>> responseMap = new HashMap<>();
-
-        for (ModuleDetail moduleDetail : moduleDetails) {
-            List<MasterDetail> masterDetails = moduleDetail.getMasterDetails();
-            log.info("masterDetails" + masterDetails);
-
-            Map<String, JSONArray> finalMasterMap = new HashMap<>();
-
-            for (MasterDetail masterDetail : masterDetails) {
-                JSONArray masterData = null;
-
-                try {
-                    // DB call
-                    masterData = getMasterDataFromDatabase(tenantId, moduleDetail.getModuleName(),
-                            masterDetail.getName());
-                } catch (Exception e) {
-                    throw new RuntimeException("Exception occurred while reading master data", e);
-                }
-
-                if (masterData == null)
-                    continue;
-
-                if (masterDetail.getFilter() != null)
-                    masterData = filterMaster(masterData, masterDetail.getFilter());
-
-                finalMasterMap.put(masterDetail.getName(), masterData);
-            }
-            responseMap.put(moduleDetail.getModuleName(), finalMasterMap);
-        }
-        return responseMap;
-    }
-
-    private JSONArray getMasterDataFromDatabase(String tenantId, String moduleName, String masterName) {
-
-        // Fetching master data object from database
-        MDMSData data = repository.findByTenantIdAndModuleNameAndMasterName(tenantId, moduleName, masterName);
-
-        // Fetching the master data from the object
-        JsonNode masterData = data.getMasterData();
-
-        // Converting JSON-node to JSONArray for backward compatibility
-        String jsonString = masterData.toString();
-        Object parsedObject = JSONValue.parse(jsonString);
-
-        if (parsedObject instanceof JSONArray) {
-            return (JSONArray) parsedObject;
-        } else {
-            throw new IllegalArgumentException("The parsed JSON is not an array.");
-        }
-    }
-
-    public JSONArray filterMaster(JSONArray masters, String filterExp) {
-        JSONArray filteredMasters = JsonPath.read(masters, filterExp);
-        return filteredMasters;
-    }
-
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public MDMSData saveMDMSData(MDMSNewRequest newRequest) {
         MDMSData request = newRequest.getMdmsData();
@@ -117,8 +51,7 @@ public class MDMSService {
                 object.setMasterName(request.getMasterName());
                 object.setMasterData(request.getMasterData());
 
-                producer.push(config.getSaveMDMDSDataTopic(), newRequest);
-                // return repository.save(object);
+                return repository.save(object);
             }
 
             // Fetching new master data to be appended
