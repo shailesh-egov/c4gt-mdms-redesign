@@ -16,4 +16,7 @@ import org.springframework.stereotype.Component;
 public class MDMSConfig {
     @Value("${kafka.topic.save.mdms.data}")
     private String saveMDMDSDataTopic;
+
+    @Value("${kafka.topic.update.mdms.data}")
+    private String updateMDMDSDataTopic;
 }
