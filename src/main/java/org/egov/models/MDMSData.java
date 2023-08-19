@@ -18,18 +18,19 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Valid
 @Entity
-@Table(name="master_data")
+@Table(name="master_data_table")
 @TypeDef(name = "json", typeClass = JsonType.class)
 public class MDMSData implements Serializable {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int  id;
 
     @NotNull(message = "tenantId cannot be null")
     private String tenantId;

@@ -79,6 +79,9 @@ public class MDMSService {
         //Fetching master data object from database
         MDMSData data = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
 
+        if(data == null){
+            throw new RuntimeException("Master Data not present");
+        }
         //Fetching the master data from the object
         JsonNode masterData = data.getMasterData();
 
@@ -102,16 +105,16 @@ public class MDMSService {
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public MDMSData saveMDMSData(MDMSRequest request) {
 
-        String masterName = request.getMdmsData().getMasterName();
-        String tenantId = request.getMdmsData().getTenantId();
-        String moduleName = request.getMdmsData().getModuleName();
+//        String masterName = request.getMdmsData().getMasterName();
+//        String tenantId = request.getMdmsData().getTenantId();
+//        String moduleName = request.getMdmsData().getModuleName();
 
-        JSONArray existingMasterDataObject = getMasterDataFromDatabase(tenantId,masterName,moduleName);
-
-        if(existingMasterDataObject != null){
-            throw new RuntimeException("Already master data object exists by same parameters");
-        }
-
+//        JSONArray existingMasterDataObject = getMasterDataFromDatabase(tenantId,masterName,moduleName);
+//
+//        if(existingMasterDataObject != null){
+//            throw new RuntimeException("Already master data object exists by same parameters");
+//        }
+        log.info("ID val: "+request.getMdmsData().getId());
         try{
             producer.push(config.getSaveMDMDSDataTopic(),request);
         }catch (Exception e){
@@ -123,16 +126,16 @@ public class MDMSService {
 
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public MDMSData updateMDMSData(MDMSRequest request) {
-        String masterName = request.getMdmsData().getMasterName();
-        String tenantId = request.getMdmsData().getTenantId();
-        String moduleName = request.getMdmsData().getModuleName();
-
-        //Fetching master data object from database
-        MDMSData existingMasterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
-
-        if(existingMasterDataObject == null){
-            throw new RuntimeException("No master data object exists by same parameters");
-        }
+//        String masterName = request.getMdmsData().getMasterName();
+//        String tenantId = request.getMdmsData().getTenantId();
+//        String moduleName = request.getMdmsData().getModuleName();
+//
+//        //Fetching master data object from database
+//        MDMSData existingMasterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
+//
+//        if(existingMasterDataObject == null){
+//            throw new RuntimeException("No master data object exists by same parameters");
+//        }
 //        existingMasterDataObject.setMasterData(request.getMdmsData().getMasterData());
 //        request.setMdmsData(existingMasterDataObject);
 

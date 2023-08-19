@@ -48,6 +48,15 @@ public class MDMSController {
 
             return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
         }
+        try{
+            mdmsService.saveMDMSData(request);
+        }
+        catch(Exception e) {
+            message = "Invalid request body: " + e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
+            return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+        }
 
 //        responseBody.add(mdmsService.saveMDMSData(request));
         message = "Creation successful";
