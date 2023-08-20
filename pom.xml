@@ -81,11 +81,11 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.egov.services</groupId>-->
-<!--			<artifactId>tracer</artifactId>-->
-<!--			<version>2.0.0-SNAPSHOT</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>org.egov.services</groupId>
+			<artifactId>tracer</artifactId>
+			<version>2.0.0-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>org.egov.services</groupId>
 			<artifactId>digit-models</artifactId>
@@ -100,6 +100,17 @@
 			<groupId>net.minidev</groupId>
 			<artifactId>json-smart</artifactId>
 			<version>2.4.7</version> <!-- Use the latest version -->
+		</dependency>
+		<!-- Egov dependencies -->
+		<dependency>
+			<groupId>org.egov.services</groupId>
+			<artifactId>tracer</artifactId>
+			<version>2.1.2-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.egov.services</groupId>
+			<artifactId>digit-models</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 <!--		<dependency>-->
 <!--			<groupId>org.egov.services</groupId>-->

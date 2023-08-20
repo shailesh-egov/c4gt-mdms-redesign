@@ -1,13 +1,10 @@
 package org.egov.controller;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import digit.models.coremodels.mdms.MdmsCriteriaReq;
 import digit.models.coremodels.mdms.MdmsResponse;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import org.egov.common.contract.response.ResponseInfo;
 import org.egov.models.*;
 import org.egov.service.JSONValidationService;
 import org.egov.service.MDMSService;
@@ -25,7 +22,7 @@ import java.util.Map;
 @RequestMapping("/mdms/v1")
 public class MDMSController {
     @Autowired
-    private MDMSService service;
+    private MDMSService mdmsService;
 
     @Autowired
     private JSONValidationService validationService;
@@ -43,7 +40,16 @@ public class MDMSController {
         String message;
 
         try {
-            validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
+            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        }
+        catch(Exception e) {
+            message = "Invalid request body: " + e.getMessage();
+            MDMSResponse response = buildResponse(message,responseBody);
+
+            return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
+        }
+        try{
+            mdmsService.saveMDMSData(request);
         }
         catch(Exception e) {
             message = "Invalid request body: " + e.getMessage();
@@ -52,7 +58,7 @@ public class MDMSController {
             return new ResponseEntity<>(response,HttpStatus.BAD_REQUEST);
         }
 
-        responseBody.add(service.saveMDMSData(request));
+//        responseBody.add(mdmsService.saveMDMSData(request));
         message = "Creation successful";
 
         MDMSResponse response = buildResponse(message,responseBody);
@@ -62,7 +68,7 @@ public class MDMSController {
 
     @RequestMapping(value = "/_search", method = RequestMethod.POST)
     private ResponseEntity<?> search(@RequestBody @Valid MdmsCriteriaReq mdmsCriteriaReq) {
-        Map<String, Map<String, JSONArray>> response = service.searchMaster(mdmsCriteriaReq);
+        Map<String, Map<String, JSONArray>> response = mdmsService.searchMaster(mdmsCriteriaReq);
 
         MdmsResponse mdmsResponse = new MdmsResponse();
         mdmsResponse.setMdmsRes(response);
@@ -76,7 +82,7 @@ public class MDMSController {
         String message;
 
         try {
-            responseBody = (ArrayList<MDMSData>) service.getMDMSData();
+            responseBody = (ArrayList<MDMSData>) mdmsService.getMDMSData();
         }catch (Exception e){
             message = e.getMessage();
             MDMSResponse response = buildResponse(message,responseBody);
@@ -95,7 +101,7 @@ public class MDMSController {
         ArrayList<MDMSData> responseBody = new ArrayList<>();
         String message;
         try {
-            validationService.validateMasterDataSchema(request.getMasterName(), request.getMasterData());
+            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
         }
         catch(Exception e) {
             message = "Invalid request body: " + e.getMessage();
@@ -105,7 +111,7 @@ public class MDMSController {
         }
 
         try {
-            responseBody.add(service.updateMDMSData(request));
+            mdmsService.updateMDMSData(request);
         }catch (Exception e){
             message = e.getMessage();
             MDMSResponse response = buildResponse(message,responseBody);
@@ -122,7 +128,7 @@ public class MDMSController {
     public ResponseEntity<String> deleteMasterData(@PathVariable int id){
 
         try{
-            String message = "Master data deleted "+service.deleteMDMSData(id);
+            String message = "Master data deleted "+mdmsService.deleteMDMSData(id);
             return new ResponseEntity<>(message, HttpStatus.OK);
         }
         catch (Exception e) {
