@@ -16,7 +16,7 @@ public class JSONValidationService {
     public void validateMasterDataSchema(String masterName, JsonNode masterData)  {
 
         //Defining schema path ,here resources/models/masterName.schema.json
-        String directoryName = "models";
+        String directoryName = "schemas";
         String fileTye = ".schema.json";
         String JSONSchemaPath = directoryName+"/"+masterName+fileTye;
 
