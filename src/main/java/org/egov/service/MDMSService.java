@@ -12,6 +12,7 @@ import org.egov.kafka.Producer;
 import org.egov.models.MDMSData;
 import org.egov.models.MDMSRequest;
 import org.egov.repository.MDMSRepository;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -38,16 +39,46 @@ public class MDMSService {
 
     public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
         String tenantId = mdmsCriteriaReq.getMdmsCriteria().getTenantId();
-        log.info("tenantId"+tenantId);
+
+        Map<String, Map<String, JSONArray>> stateLevel = null;
+        Map<String, Map<String, JSONArray>> ulbLevel = null;
+
+        if (tenantId.contains(".")) {
+            String array[] = tenantId.split("\\.");
+
+            //repalce both lines with DB call
+//            stateLevel = tenantIdMap.get(array[0]);
+//            ulbLevel = tenantIdMap.get(tenantId);
+            if (ulbLevel == null)
+                throw new CustomException("Invalid_tenantId.MdmsCriteria.tenantId", "Invalid Tenant Id");
+        } else {
+            //repalce both lines with DB call
+//            stateLevel = tenantIdMap.get(tenantId);
+            if (stateLevel == null)
+                throw new CustomException("Invalid_tenantId.MdmsCriteria.tenantId", "Invalid Tenant Id");
+        }
 
         List<ModuleDetail> moduleDetails = mdmsCriteriaReq.getMdmsCriteria().getModuleDetails();
-        log.info("moduleDetails"+moduleDetails);
-
         Map<String, Map<String, JSONArray>> responseMap = new HashMap<>();
 
         for (ModuleDetail moduleDetail : moduleDetails) {
             List<MasterDetail> masterDetails = moduleDetail.getMasterDetails();
-            log.info("masterDetails"+masterDetails);
+
+            //This will taken care once above code works
+            if (stateLevel != null || ulbLevel != null) {
+                if (stateLevel != null && ulbLevel == null) {
+                    if (stateLevel.get(moduleDetail.getModuleName()) == null)
+                        continue;
+                } else if (ulbLevel != null && stateLevel == null) {
+                    if (ulbLevel.get(moduleDetail.getModuleName()) == null)
+                        continue;
+                }
+                if (stateLevel != null || ulbLevel != null) {
+                    if (stateLevel.get(moduleDetail.getModuleName()) == null
+                            && ulbLevel.get(moduleDetail.getModuleName()) == null)
+                        continue;
+                }
+            }
 
             Map<String, JSONArray> finalMasterMap = new HashMap<>();
 
@@ -56,9 +87,9 @@ public class MDMSService {
 
                 try {
                     //DB call
-                    masterData = getMasterDataFromDatabase(tenantId, moduleDetail.getModuleName(), masterDetail.getName());
+                    masterData = getMasterData(tenantId, moduleDetail.getModuleName(), masterDetail.getName());
                 } catch (Exception e) {
-                    throw new RuntimeException("Exception occurred while reading master data", e);
+                    log.error("Exception occurred while reading master data", e);
                 }
 
                 if (masterData == null)
@@ -74,7 +105,10 @@ public class MDMSService {
         return responseMap;
     }
 
-    private JSONArray getMasterDataFromDatabase(String tenantId, String moduleName, String masterName) {
+
+    //Should return an array of master data
+    //Now only returns one object
+    private JSONArray getMasterData(String tenantId, String moduleName, String masterName) {
 
         //Fetching master data object from database
         MDMSData data = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
@@ -105,16 +139,6 @@ public class MDMSService {
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public MDMSData saveMDMSData(MDMSRequest request) {
 
-//        String masterName = request.getMdmsData().getMasterName();
-//        String tenantId = request.getMdmsData().getTenantId();
-//        String moduleName = request.getMdmsData().getModuleName();
-
-//        JSONArray existingMasterDataObject = getMasterDataFromDatabase(tenantId,masterName,moduleName);
-//
-//        if(existingMasterDataObject != null){
-//            throw new RuntimeException("Already master data object exists by same parameters");
-//        }
-        log.info("ID val: "+request.getMdmsData().getId());
         try{
             producer.push(config.getSaveMDMDSDataTopic(),request);
         }catch (Exception e){
@@ -126,19 +150,6 @@ public class MDMSService {
 
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public MDMSData updateMDMSData(MDMSRequest request) {
-//        String masterName = request.getMdmsData().getMasterName();
-//        String tenantId = request.getMdmsData().getTenantId();
-//        String moduleName = request.getMdmsData().getModuleName();
-//
-//        //Fetching master data object from database
-//        MDMSData existingMasterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(tenantId,moduleName,masterName);
-//
-//        if(existingMasterDataObject == null){
-//            throw new RuntimeException("No master data object exists by same parameters");
-//        }
-//        existingMasterDataObject.setMasterData(request.getMdmsData().getMasterData());
-//        request.setMdmsData(existingMasterDataObject);
-
         try {
             producer.push(config.getUpdateMDMDSDataTopic(),request);
         } catch (Exception e) {
