@@ -11,4 +11,6 @@ public interface MDMSRepository extends JpaRepository<MDMSData,Integer> {
     MDMSData findByTenantIdAndModuleNameAndMasterName(String tenantId, String moduleName, String masterName);
     List<MDMSData> findAllByTenantId(String tenantId);
 
+    List<MDMSData> findAllByTenantIdAndModuleName(String tenantId,String moduleName);
+
 }
