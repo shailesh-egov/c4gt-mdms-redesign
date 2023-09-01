@@ -34,6 +34,8 @@ serviceMaps:
           basePath: $.MDMSData
           jsonMaps:
             - jsonPath: $.MDMSData.masterData
+              type: JSON
+              dbType: JSONB
 
             - jsonPath: $.MDMSData.id
 
@@ -42,6 +44,4 @@ serviceMaps:
             - jsonPath: $.MDMSData.moduleName
 
             - jsonPath: $.MDMSData.masterName
-              type: JSON
-              dbType: JSONB
 ```

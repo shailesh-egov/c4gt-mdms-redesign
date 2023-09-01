@@ -6,7 +6,7 @@ import digit.models.coremodels.mdms.MdmsResponse;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.models.*;
-import org.egov.service.JSONValidationService;
+import org.egov.service.JsonValidationService;
 import org.egov.service.MDMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,7 +25,7 @@ public class MDMSController {
     private MDMSService mdmsService;
 
     @Autowired
-    private JSONValidationService validationService;
+    private JsonValidationService validationService;
 
     private MDMSResponse buildResponse(String message,ArrayList<MDMSData> masterDataBody){
         MDMSResponse response = new MDMSResponse();
@@ -137,4 +137,10 @@ public class MDMSController {
         }
 
     }
+
+    @RequestMapping(value = "/_create/schema", method = RequestMethod.POST)
+    public ResponseEntity<MDMSSchema> deleteMasterData(@RequestBody MDMSSchema request){
+        return new ResponseEntity<>(validationService.addMasterDataSchema(request), HttpStatus.OK);
+    }
+
 }
