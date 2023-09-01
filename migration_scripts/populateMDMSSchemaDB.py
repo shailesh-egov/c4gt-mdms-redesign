@@ -32,22 +32,13 @@ def getJSONSchema(dirPath):
                     {"masterName": masterName, "masterDataSchema": schema}
                 )
                 response = requests.request("POST", url, headers=headers, data=payload)
-                print(response.status_code)
+                # print("\n\nreponse text: ", response.text)
             except Exception as ex:
                 print(ex)
                 print("Error in API call")
 
 
 if __name__ == "__main__":
-    """
-    Reading env variables
-    """
-    load_dotenv()
-    schemaPath = os.getenv("SCHEMA_PATH")
-
-    schemaPathExist = os.path.exists(schemaPath)
-    if not schemaPathExist:
-        print("Please provide schema output path")
-        sys.exit()
     
-    getJSONSchema(schemaPath)
+    dirPath = "generatedSchemas"
+    getJSONSchema(dirPath)

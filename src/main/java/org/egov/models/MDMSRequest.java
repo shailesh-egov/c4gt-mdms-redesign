@@ -16,10 +16,10 @@ public class MDMSRequest {
     @JsonProperty("RequestInfo")
     @Valid
     @NotNull(message = "requestInfo cannot be null")
-    private RequestInfo requestInfo = null;
+    private RequestInfo requestInfo;
 
     @JsonProperty("MDMSData")
     @Valid
     @NotNull(message = "MDMS Data cannot be null")
-    private MDMSData mdmsData = null;
+    private MDMSData mdmsData;
 }

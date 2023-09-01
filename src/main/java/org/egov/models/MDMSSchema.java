@@ -27,6 +27,7 @@ import java.io.Serializable;
 public class MDMSSchema implements Serializable {
 
     @Id
+    @NotNull(message = "masterName cannot be null")
     private String  masterName;
 
     @NotNull(message = "masterData cannot be null")
