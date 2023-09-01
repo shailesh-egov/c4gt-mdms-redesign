@@ -143,4 +143,9 @@ public class MDMSController {
         return new ResponseEntity<>(validationService.addMasterDataSchema(request), HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/_create/config", method = RequestMethod.POST)
+    public ResponseEntity<MasterConfig> createMasterDataConfig(@RequestBody MasterConfig request){
+        return new ResponseEntity<>(mdmsService.createMasterConfigData(request), HttpStatus.OK);
+    }
+
 }

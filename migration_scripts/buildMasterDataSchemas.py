@@ -1,19 +1,25 @@
 from genson import SchemaBuilder
 from dotenv import load_dotenv
 import json, sys, os, io
-import logging as log
+
 
 generatedSchemas = {}
 
-
 def readFiles(mdmsPath, schemaPath):
+    """
+    Generates master data schemas used for validation by reading existig master data json files
+
+    Args:
+        mdmsPath (String): Directory where the master data is stored
+        schemaPath (String): Directory where the schemas will be written
+    """
     for root, dirs, files in os.walk(mdmsPath):
         for file in files:
             if file.endswith(".json"):
                 filePath = os.path.join(root, file)
                 print("generating schema for {}".format(filePath))
                 mdmsData = getFileData(filePath)
-                masterName = getFileName(mdmsData)
+                masterName = getMasterName(mdmsData)
 
                 mdmsData = mdmsData[masterName]
 
@@ -27,6 +33,15 @@ def readFiles(mdmsPath, schemaPath):
 
 
 def getFileData(filePath):
+    """
+    Returns master data object from a given file path
+
+    Args:
+        filePath (String): A path where master data file is present in JSON format
+
+    Returns:
+        masterData (Object): Master data object from the JSON file.
+    """
     try:
         f = open(filePath, encoding="utf-8")
         data = json.load(f)
@@ -40,8 +55,32 @@ def getFileData(filePath):
         print(ex)
         print("JSON error in file - " + filePath)
 
+def getMasterName(data):
+    """
+    Returns master name from the give master data
+
+    Args:
+        masterData (Object): Master data object
+
+    Returns:
+        masterName (String): Master name
+    """
+    masterName = None
+    for key in data.keys():
+        if key != "tenantId" and key != "moduleName" and data[key] is not None:
+            masterName = key
+    return masterName
 
 def createJsonSchema(data, schemaPath, masterName):
+    """
+    Builds schemas from given master data and writes them to the given directory
+
+    Args:
+        masterData (Object): Master data object
+        schemaPath (String): Directory where the schema will be written
+        masterName (String): Name of the master data object used to name the schema file for respective schema
+
+    """
     try:
         if not generatedSchemas.get(masterName):
             builder = SchemaBuilder(schema_uri="http://json-schema.org/draft-07/schema")
@@ -65,39 +104,11 @@ def createJsonSchema(data, schemaPath, masterName):
         raise ex
 
 
-def getFileName(data):
-    masterName = None
-    for key in data.keys():
-        if key != "tenantId" and key != "moduleName" and data[key] is not None:
-            masterName = key
-    return masterName
-
-
-def changeJsonSchemaToSunbirdSchema(schema, masterName):
-    try:
-        schemaName = "{}{}".format(masterName, schemaSuffix)
-        newSchema = {}
-        newSchema["$schema"] = "http://json-schema.org/draft-07/schema"
-        newSchema["title"] = masterName + " master data schema"
-        newSchema["type"] = "array"
-
-        newSchema["properties"] = {}
-        newSchema["properties"][masterName] = {"$ref": "#/definitions/" + schemaName}
-        newSchema["required"] = [masterName]
-
-        definitions = {}
-        del schema["$schema"]
-        definitions[schemaName] = schema
-        newSchema["definitions"] = definitions
-
-        return newSchema
-    except Exception as ex:
-        print("Exception while changing schema to sunbird schema.")
-        print(ex)
-        return None
-
-
 if __name__ == "__main__":
+
+    """
+    Reading env variables
+    """
     load_dotenv()
     path = None
     mdmsPath = os.getenv("MDMS_DATA_PATH")
@@ -120,9 +131,10 @@ if __name__ == "__main__":
         print("Please provide schema output path")
         sys.exit()
 
-    # readFiles("leftover", schemaPath)
-    # sys.exit()
 
+    """
+    Build schema functionality
+    """
     for path in os.listdir(mdmsPath):
         path = mdmsPath + "/" + path
         readFiles(path, schemaPath)
