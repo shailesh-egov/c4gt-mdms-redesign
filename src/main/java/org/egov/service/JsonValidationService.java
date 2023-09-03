@@ -56,9 +56,16 @@ public class JsonValidationService {
             throw new RuntimeException("Please fix request body " + errorsCombined);
     }
 
-    public MDMSSchemaRequest addMasterDataSchema(MDMSSchemaRequest request) {
+    public MDMSSchemaRequest createMasterDataSchema(MDMSSchemaRequest request) {
         producer.push(config.getSaveMDMDSSchemaTopic(), request);
         return request;
     }
+
+    public MDMSSchemaRequest updateMasterDataSchema(MDMSSchemaRequest request){
+        producer.push(config.getUpdateMDMDSSchemaTopic(), request);
+        return request;
+    }
+
+
 
 }

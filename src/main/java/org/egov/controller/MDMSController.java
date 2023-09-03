@@ -10,9 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -24,40 +22,13 @@ public class MDMSController {
     @Autowired
     private JsonValidationService validationService;
 
-    private MDMSResponse buildResponse(String message, ArrayList<MDMSData> masterDataBody) {
-        MDMSResponse response = new MDMSResponse();
-        response.setMessage(message);
-        response.setMasterData(masterDataBody);
-
-        return response;
-    }
 
     @RequestMapping(value = "/_create", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> createMasterData(@RequestBody MDMSRequest request) {
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
-        String message;
+    public ResponseEntity<MDMSResponse> createMDMSData(@RequestBody MDMSRequest request) {
 
-        try {
-            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(),
-                    request.getMdmsData().getMasterData());
-        } catch (Exception e) {
-            message = "Invalid request body: " + e.getMessage();
-            MDMSResponse response = buildResponse(message, responseBody);
-
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        }
-        try {
-            mdmsService.saveMDMSData(request);
-        } catch (Exception e) {
-            message = "Invalid request body: " + e.getMessage();
-            MDMSResponse response = buildResponse(message, responseBody);
-
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        }
-        message = "Creation successful";
-        MDMSResponse response = buildResponse(message, responseBody);
-
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        MDMSResponse mdmsResponse = mdmsService.createMDMSData(request);
+        return new ResponseEntity<>(mdmsResponse, HttpStatus.CREATED);
     }
 
     @RequestMapping(value = "/_search", method = RequestMethod.POST)
@@ -76,31 +47,11 @@ public class MDMSController {
 
 
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> updateMasterData(@RequestBody MDMSRequest request) {
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
-        String message;
-        try {
-            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(),
-                    request.getMdmsData().getMasterData());
-        } catch (Exception e) {
-            message = "Invalid request body: " + e.getMessage();
-            MDMSResponse response = buildResponse(message, responseBody);
+    public ResponseEntity<MDMSResponse> updateMDMSData(@RequestBody MDMSRequest request) {
 
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        }
-
-        try {
-            mdmsService.updateMDMSData(request);
-        } catch (Exception e) {
-            message = e.getMessage();
-            MDMSResponse response = buildResponse(message, responseBody);
-
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        message = "Master data updated";
-        MDMSResponse response = buildResponse(message, responseBody);
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        MDMSResponse mdmsResponse = mdmsService.updateMDMSData(request);
+        return new ResponseEntity<>(mdmsResponse, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_delete/{id}", method = RequestMethod.POST)
@@ -117,13 +68,22 @@ public class MDMSController {
     }
 
     @RequestMapping(value = "/_create/schema", method = RequestMethod.POST)
-    public ResponseEntity<MDMSSchemaRequest> deleteMasterData(@RequestBody MDMSSchemaRequest request) {
-        return new ResponseEntity<>(validationService.addMasterDataSchema(request), HttpStatus.OK);
+    public ResponseEntity<MDMSSchemaRequest> createMasterDataSchema(@RequestBody MDMSSchemaRequest request) {
+        return new ResponseEntity<>(validationService.createMasterDataSchema(request), HttpStatus.OK);
+    }
+    @RequestMapping(value = "/_update/schema", method = RequestMethod.POST)
+    public ResponseEntity<MDMSSchemaRequest> updatedMasterDataSchema(@RequestBody MDMSSchemaRequest request) {
+        return new ResponseEntity<>(validationService.updateMasterDataSchema(request), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_create/config", method = RequestMethod.POST)
     public ResponseEntity<MasterConfigRequest> createMasterDataConfig(@RequestBody MasterConfigRequest request) {
         return new ResponseEntity<>(mdmsService.createMasterConfigData(request), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/_update/config", method = RequestMethod.POST)
+    public ResponseEntity<MasterConfigRequest> updateMasterDataConfig(@RequestBody MasterConfigRequest request) {
+        return new ResponseEntity<>(mdmsService.updateMasterConfigData(request), HttpStatus.OK);
     }
 
 }
