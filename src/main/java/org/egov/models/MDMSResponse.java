@@ -11,7 +11,6 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,11 +18,11 @@ import java.util.List;
 public class MDMSResponse {
     @JsonProperty("ResponseInfo")
     @Valid
-    private ResponseInfo responseInfo = null;
+    private ResponseInfo responseInfo;
 
     @JsonProperty("master_data")
     @Valid
-    private List<MDMSData> masterData = null;
+    private List<MDMSData> masterData;
 
     public MDMSResponse addMDMSItem(MDMSData mdmsItem) {
         if (this.masterData == null) {
