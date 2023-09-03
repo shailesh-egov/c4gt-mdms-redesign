@@ -5,6 +5,7 @@ import json, sys, os, io
 
 generatedSchemas = {}
 
+
 def readFiles(mdmsPath, schemaPath):
     """
     Generates master data schemas used for validation by reading existig master data json files
@@ -55,6 +56,7 @@ def getFileData(filePath):
         print(ex)
         print("JSON error in file - " + filePath)
 
+
 def getMasterName(data):
     """
     Returns master name from the give master data
@@ -70,6 +72,7 @@ def getMasterName(data):
         if key != "tenantId" and key != "moduleName" and data[key] is not None:
             masterName = key
     return masterName
+
 
 def createJsonSchema(data, schemaPath, masterName):
     """
@@ -105,7 +108,6 @@ def createJsonSchema(data, schemaPath, masterName):
 
 
 if __name__ == "__main__":
-
     """
     Reading env variables
     """
@@ -130,7 +132,6 @@ if __name__ == "__main__":
     if not schemaPathExist:
         print("Please provide schema output path")
         sys.exit()
-
 
     """
     Build schema functionality
