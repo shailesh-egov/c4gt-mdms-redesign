@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -18,7 +19,7 @@ import java.util.Date;
 public class MDMSData {
 
     @JsonProperty("id")
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @JsonProperty("tenantId")
     @NotNull(message = "tenantId cannot be null")
