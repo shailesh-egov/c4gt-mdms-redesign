@@ -1,62 +1,50 @@
 package org.egov.models;
 
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.LastModifiedBy;
-
-import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.io.Serializable;
 import java.util.Date;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Valid
-@Entity
-@Table(name="master_data_table")
-@TypeDef(name = "json", typeClass = JsonType.class)
-public class MDMSData implements Serializable {
-    @Id
-//    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int  id;
+@Builder
+public class MDMSData {
 
+    @JsonProperty("id")
+    private String id;
+
+    @JsonProperty("tenantId")
     @NotNull(message = "tenantId cannot be null")
     private String tenantId;
 
+    @JsonProperty("moduleName")
     @NotNull(message = "moduleName cannot be null")
     private String moduleName;
 
+    @JsonProperty("masterName")
     @NotNull(message = "masterName cannot be null")
     private String masterName;
 
+    @JsonProperty("masterData")
     @NotNull(message = "masterData cannot be null")
-    @Type(type = "json")
-    @Column(columnDefinition = "jsonb")
     private JsonNode masterData;
 
-    @CreationTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
+    @JsonProperty("createdAt")
     private Date createdAt;
 
-    @CreatedBy
+    @JsonProperty("createdBy")
     private String createdBy;
 
-    @UpdateTimestamp
-    @Temporal(TemporalType.TIMESTAMP)
+    @JsonProperty("updatedAt")
     private Date updatedAt;
 
-    @LastModifiedBy
+    @JsonProperty("updatedBy")
     private String updatedBy;
 }

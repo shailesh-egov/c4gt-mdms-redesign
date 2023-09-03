@@ -2,7 +2,6 @@ package org.egov.controller;
 
 import digit.models.coremodels.mdms.MdmsCriteriaReq;
 import digit.models.coremodels.mdms.MdmsResponse;
-import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.models.*;
 import org.egov.service.JsonValidationService;
@@ -11,12 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
-@Slf4j
 @RequestMapping("/mdms/v1")
 public class MDMSController {
     @Autowired
@@ -55,9 +54,7 @@ public class MDMSController {
 
             return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         }
-
         message = "Creation successful";
-
         MDMSResponse response = buildResponse(message, responseBody);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -77,26 +74,7 @@ public class MDMSController {
         return new ResponseEntity<>(mdmsResponse, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/_getAll", method = RequestMethod.POST)
-    public ResponseEntity<MDMSResponse> getMasterData() {
-        ArrayList<MDMSData> responseBody = new ArrayList<>();
-        String message;
 
-        try {
-            responseBody = (ArrayList<MDMSData>) mdmsService.getMDMSData();
-        } catch (Exception e) {
-            message = e.getMessage();
-            MDMSResponse response = buildResponse(message, responseBody);
-
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        message = "All master data fetched";
-        MDMSResponse response = buildResponse(message, responseBody);
-
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    // This function can be removed
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMasterData(@RequestBody MDMSRequest request) {
         ArrayList<MDMSData> responseBody = new ArrayList<>();
@@ -139,12 +117,12 @@ public class MDMSController {
     }
 
     @RequestMapping(value = "/_create/schema", method = RequestMethod.POST)
-    public ResponseEntity<MDMSSchema> deleteMasterData(@RequestBody MDMSSchema request) {
+    public ResponseEntity<MDMSSchemaRequest> deleteMasterData(@RequestBody MDMSSchemaRequest request) {
         return new ResponseEntity<>(validationService.addMasterDataSchema(request), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/_create/config", method = RequestMethod.POST)
-    public ResponseEntity<MasterConfig> createMasterDataConfig(@RequestBody MasterConfig request) {
+    public ResponseEntity<MasterConfigRequest> createMasterDataConfig(@RequestBody MasterConfigRequest request) {
         return new ResponseEntity<>(mdmsService.createMasterConfigData(request), HttpStatus.OK);
     }
 

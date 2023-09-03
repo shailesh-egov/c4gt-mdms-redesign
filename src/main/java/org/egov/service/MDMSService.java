@@ -12,12 +12,12 @@ import org.egov.kafka.Producer;
 import org.egov.models.MDMSData;
 import org.egov.models.MDMSRequest;
 import org.egov.models.MasterConfig;
+import org.egov.models.MasterConfigRequest;
 import org.egov.repository.ConfigRepository;
 import org.egov.repository.MDMSRepository;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import net.minidev.json.JSONArray;
 
@@ -42,8 +42,9 @@ public class MDMSService {
     private ConfigRepository masterConfigRepository;
 
     // For fallback functionality
-    public MasterConfig createMasterConfigData(MasterConfig request) {
-        return masterConfigRepository.save(request);
+    public MasterConfigRequest createMasterConfigData(MasterConfigRequest request) {
+        producer.push(config.getSaveMDMDSConfigTopic(), request);
+        return request;
     }
 
     public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
@@ -213,23 +214,11 @@ public class MDMSService {
         return new MDMSData();
     }
 
-    @Cacheable(value = "mdmsDataCache")
-    public List<MDMSData> getMDMSData() {
-
-        try {
-            return repository.findAll();
-        } catch (Exception e) {
-            log.error("Error while fetching MDMSData: " + e.getMessage(), e);
-            throw new RuntimeException("Error while fetching MDMSData", e);
-        }
-
-    }
-
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
     public String deleteMDMSData(int id) {
 
         try {
-            repository.deleteById(id);
+            // repository.deleteById(id);
             return "Request removed !! " + id;
         } catch (Exception e) {
             log.error("Error while deleting MDMSData: " + e.getMessage(), e);

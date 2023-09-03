@@ -19,4 +19,11 @@ public class MDMSConfig {
 
     @Value("${kafka.topic.update.mdms.data}")
     private String updateMDMDSDataTopic;
+
+    @Value("${kafka.topic.save.mdms.schemas}")
+    private String saveMDMDSSchemaTopic;
+
+    @Value("${kafka.topic.save.mdms.config}")
+    private String saveMDMDSConfigTopic;
+
 }
