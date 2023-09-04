@@ -18,6 +18,7 @@ import org.egov.tracer.model.CustomException;
 import org.egov.util.ResponseInfoFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -44,6 +45,7 @@ public class MDMSService {
     @Autowired
     private ResponseInfoFactory responseInfoFactory;
 
+    @Cacheable(value = "mdmsDataCache", key = "#mdmsCriteriaReq.MdmsCriteria.tenantId"+"."+"#mdmsCriteriaReq.MdmsCriteria.moduleDetails.toString()")
     public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
         String tenantId = mdmsCriteriaReq.getMdmsCriteria().getTenantId();
 
@@ -61,14 +63,12 @@ public class MDMSService {
             ulbLevelTenantId = array[1];
 
             ulbLevel = repository.existsByTenantId(ulbLevelTenantId);
-            if (!ulbLevel)
-                throw new CustomException("Invalid_tenantId.MdmsCriteria.tenantId", "Invalid Tenant Id");
+            if (!ulbLevel) throw new CustomException("Invalid_tenantId.MdmsCriteria.tenantId", "Invalid Tenant Id");
         } else {
             stateLevelTenantId = tenantId;
 
             stateLevel = repository.existsByTenantId(stateLevelTenantId);
-            if (!stateLevel)
-                throw new CustomException("Invalid_tenantId.MdmsCriteria.tenantId", "Invalid Tenant Id");
+            if (!stateLevel) throw new CustomException("Invalid_tenantId.MdmsCriteria.tenantId", "Invalid Tenant Id");
         }
 
         List<ModuleDetail> moduleDetails = mdmsCriteriaReq.getMdmsCriteria().getModuleDetails();
@@ -81,17 +81,13 @@ public class MDMSService {
             boolean ulbLevelModules;
 
             if (stateLevel) {
-                stateLevelModules = repository.existsByTenantIdAndModuleName(stateLevelTenantId,
-                        moduleDetail.getModuleName());
+                stateLevelModules = repository.existsByTenantIdAndModuleName(stateLevelTenantId, moduleDetail.getModuleName());
 
-                if (!stateLevelModules)
-                    continue;
+                if (!stateLevelModules) continue;
             } else {
-                ulbLevelModules = repository.existsByTenantIdAndModuleName(ulbLevelTenantId,
-                        moduleDetail.getModuleName());
+                ulbLevelModules = repository.existsByTenantIdAndModuleName(ulbLevelTenantId, moduleDetail.getModuleName());
 
-                if (!ulbLevelModules)
-                    continue;
+                if (!ulbLevelModules) continue;
             }
 
             Map<String, JSONArray> finalMasterMap = new HashMap<>();
@@ -100,17 +96,14 @@ public class MDMSService {
                 JSONArray masterData = null;
 
                 try {
-                    masterData = getMasterData(stateLevelTenantId, ulbLevelTenantId, ulbLevel,
-                            moduleDetail.getModuleName(), masterDetail.getName());
+                    masterData = getMasterData(stateLevelTenantId, ulbLevelTenantId, ulbLevel, moduleDetail.getModuleName(), masterDetail.getName());
                 } catch (Exception e) {
                     log.error("Exception occurred while reading master data", e);
                 }
 
-                if (masterData == null)
-                    continue;
+                if (masterData == null) continue;
 
-                if (masterDetail.getFilter() != null)
-                    masterData = filterMaster(masterData, masterDetail.getFilter());
+                if (masterDetail.getFilter() != null) masterData = filterMaster(masterData, masterDetail.getFilter());
 
                 finalMasterMap.put(masterDetail.getName(), masterData);
             }
@@ -121,8 +114,7 @@ public class MDMSService {
         return responseMap;
     }
 
-    private JSONArray getMasterData(String stateLevelTenantId, String ulbLevelTenantId, boolean ulbLevel,
-                                    String moduleName, String masterName) {
+    private JSONArray getMasterData(String stateLevelTenantId, String ulbLevelTenantId, boolean ulbLevel, String moduleName, String masterName) {
 
         // Fallback functionality
         boolean moduleMetaData = masterConfigRepository.existsByModuleName(moduleName);
@@ -153,16 +145,14 @@ public class MDMSService {
 
             if (repository.existsByTenantIdAndModuleName(stateLevelTenantId, moduleName)) {
 
-                masterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(stateLevelTenantId, moduleName,
-                        masterName);
+                masterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(stateLevelTenantId, moduleName, masterName);
                 return convertMasterDataObjectToJsonArray(masterDataObject);
             } else {
                 return null;
             }
 
         } else if (repository.existsByTenantIdAndModuleName(ulbLevelTenantId, moduleName)) {
-            masterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(ulbLevelTenantId, moduleName,
-                    masterName);
+            masterDataObject = repository.findByTenantIdAndModuleNameAndMasterName(ulbLevelTenantId, moduleName, masterName);
             return convertMasterDataObjectToJsonArray(masterDataObject);
         } else {
             return null;
@@ -224,8 +214,9 @@ public class MDMSService {
         return request;
     }
 
-    public MasterConfigRequest updateMasterConfigData(MasterConfigRequest request){
-        producer.push(config.getUpdateMDMDSConfigTopic(),request);
+    public MasterConfigRequest updateMasterConfigData(MasterConfigRequest request) {
+        producer.push(config.getUpdateMDMDSConfigTopic(), request);
         return request;
     }
 }
+

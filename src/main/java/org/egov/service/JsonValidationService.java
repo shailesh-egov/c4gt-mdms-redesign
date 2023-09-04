@@ -52,8 +52,7 @@ public class JsonValidationService {
         }
 
         // If errors are present else validation success
-        if (errors.size() > 0)
-            throw new RuntimeException("Please fix request body " + errorsCombined);
+        if (errors.size() > 0) throw new RuntimeException("Please fix request body " + errorsCombined);
     }
 
     public MDMSSchemaRequest createMasterDataSchema(MDMSSchemaRequest request) {
@@ -61,11 +60,10 @@ public class JsonValidationService {
         return request;
     }
 
-    public MDMSSchemaRequest updateMasterDataSchema(MDMSSchemaRequest request){
+    public MDMSSchemaRequest updateMasterDataSchema(MDMSSchemaRequest request) {
         producer.push(config.getUpdateMDMDSSchemaTopic(), request);
         return request;
     }
-
 
 
 }
