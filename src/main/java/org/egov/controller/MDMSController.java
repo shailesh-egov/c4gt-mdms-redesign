@@ -30,7 +30,12 @@ public class MDMSController {
     @RequestMapping(value = "/_create", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> createMDMSData(@RequestBody MDMSRequest request) {
 
-        validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        try {
+            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        } catch (Exception e) {
+            throw new RuntimeException("Validation Error: ", e);
+        }
+
         MDMSResponse mdmsResponse = mdmsService.createMDMSData(request);
         return new ResponseEntity<>(mdmsResponse, HttpStatus.CREATED);
     }
@@ -53,7 +58,11 @@ public class MDMSController {
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMDMSData(@RequestBody MDMSRequest request) {
 
-        validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        try {
+            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        } catch (Exception e) {
+            throw new RuntimeException("Validation Error: ", e);
+        }
         MDMSResponse mdmsResponse = mdmsService.updateMDMSData(request);
         return new ResponseEntity<>(mdmsResponse, HttpStatus.OK);
     }
