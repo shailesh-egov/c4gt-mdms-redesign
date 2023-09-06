@@ -2,7 +2,6 @@ package org.egov.repository.rowmapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.egov.models.MDMSSchema;
 import org.postgresql.util.PGobject;
 import org.springframework.jdbc.core.RowMapper;
@@ -10,8 +9,6 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-
-@Slf4j
 public class SchemaRowMapper implements RowMapper<MDMSSchema> {
 
     @Override

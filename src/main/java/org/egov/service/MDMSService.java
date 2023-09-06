@@ -6,21 +6,21 @@ import digit.models.coremodels.mdms.MasterDetail;
 import digit.models.coremodels.mdms.MdmsCriteriaReq;
 import digit.models.coremodels.mdms.ModuleDetail;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONValue;
+import org.egov.common.contract.response.ResponseInfo;
 import org.egov.config.MDMSConfig;
 import org.egov.kafka.Producer;
-import org.egov.models.MDMSData;
-import org.egov.models.MDMSRequest;
-import org.egov.models.MasterConfig;
-import org.egov.models.MasterConfigRequest;
+import org.egov.models.*;
 import org.egov.repository.ConfigRepository;
 import org.egov.repository.MDMSRepository;
 import org.egov.tracer.model.CustomException;
+import org.egov.util.ResponseInfoFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
-import net.minidev.json.JSONArray;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +29,6 @@ import java.util.Map;
 @Slf4j
 public class MDMSService {
 
-    @Autowired
-    private MDMSRepository repository;
 
     @Autowired
     private Producer producer;
@@ -39,13 +37,12 @@ public class MDMSService {
     private MDMSConfig config;
 
     @Autowired
-    private ConfigRepository masterConfigRepository;
+    private MDMSRepository repository;
 
-    // For fallback functionality
-    public MasterConfigRequest createMasterConfigData(MasterConfigRequest request) {
-        producer.push(config.getSaveMDMDSConfigTopic(), request);
-        return request;
-    }
+    @Autowired
+    private ConfigRepository masterConfigRepository;
+    @Autowired
+    private ResponseInfoFactory responseInfoFactory;
 
     public Map<String, Map<String, JSONArray>> searchMaster(MdmsCriteriaReq mdmsCriteriaReq) {
         String tenantId = mdmsCriteriaReq.getMdmsCriteria().getTenantId();
@@ -125,7 +122,7 @@ public class MDMSService {
     }
 
     private JSONArray getMasterData(String stateLevelTenantId, String ulbLevelTenantId, boolean ulbLevel,
-            String moduleName, String masterName) {
+                                    String moduleName, String masterName) {
 
         // Fallback functionality
         boolean moduleMetaData = masterConfigRepository.existsByModuleName(moduleName);
@@ -191,27 +188,22 @@ public class MDMSService {
     }
 
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
-    public MDMSData saveMDMSData(MDMSRequest request) {
+    public MDMSResponse createMDMSData(MDMSRequest mdmsRequest) {
 
-        try {
-            producer.push(config.getSaveMDMDSDataTopic(), request);
-        } catch (Exception e) {
-            throw new RuntimeException("Error while creating master data " + e.getMessage());
-        }
-
-        return new MDMSData();
+        producer.push(config.getSaveMDMDSDataTopic(), mdmsRequest);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(mdmsRequest.getRequestInfo(), true);
+        MDMSResponse mdmsResponse = MDMSResponse.builder().responseInfo(responseInfo).masterData(Collections.singletonList(mdmsRequest.getMdmsData())).build();
+        return mdmsResponse;
     }
 
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
-    public MDMSData updateMDMSData(MDMSRequest request) {
-        try {
-            producer.push(config.getUpdateMDMDSDataTopic(), request);
-        } catch (Exception e) {
-            log.error("Error while updating MDMSData: " + e.getMessage(), e);
-            throw new RuntimeException("Error while updating MDMSData", e);
-        }
+    public MDMSResponse updateMDMSData(MDMSRequest mdmsRequest) {
 
-        return new MDMSData();
+        producer.push(config.getUpdateMDMDSDataTopic(), mdmsRequest);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(mdmsRequest.getRequestInfo(), true);
+        MDMSResponse mdmsResponse = MDMSResponse.builder().responseInfo(responseInfo).masterData(Collections.singletonList(mdmsRequest.getMdmsData())).build();
+
+        return mdmsResponse;
     }
 
     @CacheEvict(value = "mdmsDataCache", allEntries = true)
@@ -224,5 +216,16 @@ public class MDMSService {
             log.error("Error while deleting MDMSData: " + e.getMessage(), e);
             throw new RuntimeException("Error while deleting MDMSData", e);
         }
+    }
+
+    // For fallback functionality
+    public MasterConfigRequest createMasterConfigData(MasterConfigRequest request) {
+        producer.push(config.getSaveMDMDSConfigTopic(), request);
+        return request;
+    }
+
+    public MasterConfigRequest updateMasterConfigData(MasterConfigRequest request){
+        producer.push(config.getUpdateMDMDSConfigTopic(),request);
+        return request;
     }
 }
