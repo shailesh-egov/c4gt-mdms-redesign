@@ -7,11 +7,11 @@ import json
 
 url = "http://localhost:8031/mdms/v1/_create"
 
-id = 1
+id = 0
 failCount = 0
 
 
-def readFiles(mdmsPath, payload):
+def readFiles(mdmsPath, defaultPayload):
     """
     Reads master data  from the given directory and populates relational database with the same
 
@@ -39,18 +39,18 @@ def readFiles(mdmsPath, payload):
 
                         if mdmsData != None:
                             try:
-                                payload["MDMSData"] = {
-                                    "id": id,
+                                defaultPayload["MDMSData"] = {
+                                    "id": str(id),
                                     "tenantId": tenantId,
                                     "moduleName": moduleName,
                                     "masterName": masterName,
                                     "masterData": mdmsData,
                                 }
-                                payloadNew = json.dumps(payload)
+                                payload = json.dumps(defaultPayload)
                                 headers = {"Content-Type": "application/json"}
 
                                 response = requests.request(
-                                    "POST", url, headers=headers, data=payloadNew
+                                    "POST", url, headers=headers, data=payload
                                 )
 
                                 if response.status_code == 400:
@@ -63,7 +63,6 @@ def readFiles(mdmsPath, payload):
                                         " in module : ",
                                         moduleName,
                                     )
-
                             except Exception as ex:
                                 print("MDMS request failed")
                                 print(ex)
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         print("Please provide mdms path")
         sys.exit()
 
-    payload = {
+    defaultPayload = {
         "RequestInfo": {
             "apiId": "Rainmaker",
             "ver": None,
@@ -157,6 +156,6 @@ if __name__ == "__main__":
     }
 
     # Read and populate functionality
-    readFiles(path, payload)
+    readFiles(path, defaultPayload)
 
     print("\n\nFinal count: ", id, "  failcount: ", failCount)

@@ -5,7 +5,9 @@ import com.networknt.schema.JsonSchema;
 import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import com.networknt.schema.ValidationMessage;
-import org.egov.models.MDMSSchema;
+import org.egov.config.MDMSConfig;
+import org.egov.kafka.Producer;
+import org.egov.models.MDMSSchemaRequest;
 import org.egov.repository.SchemaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,12 @@ public class JsonValidationService {
 
     @Autowired
     private SchemaRepository repository;
+
+    @Autowired
+    private Producer producer;
+
+    @Autowired
+    private MDMSConfig config;
 
     public void validateMasterDataSchema(String masterName, JsonNode masterData) {
 
@@ -48,8 +56,9 @@ public class JsonValidationService {
             throw new RuntimeException("Please fix request body " + errorsCombined);
     }
 
-    public MDMSSchema addMasterDataSchema(MDMSSchema request) {
-        return repository.save(request);
+    public MDMSSchemaRequest addMasterDataSchema(MDMSSchemaRequest request) {
+        producer.push(config.getSaveMDMDSSchemaTopic(), request);
+        return request;
     }
 
 }
