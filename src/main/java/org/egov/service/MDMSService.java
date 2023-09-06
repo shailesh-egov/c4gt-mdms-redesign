@@ -196,18 +196,6 @@ public class MDMSService {
         return mdmsResponse;
     }
 
-    @CacheEvict(value = "mdmsDataCache", allEntries = true)
-    public String deleteMDMSData(int id) {
-
-        try {
-            // repository.deleteById(id);
-            return "Request removed !! " + id;
-        } catch (Exception e) {
-            log.error("Error while deleting MDMSData: " + e.getMessage(), e);
-            throw new RuntimeException("Error while deleting MDMSData", e);
-        }
-    }
-
     // For fallback functionality
     public MasterConfigRequest createMasterConfigData(MasterConfigRequest request) {
         producer.push(config.getSaveMDMDSConfigTopic(), request);
