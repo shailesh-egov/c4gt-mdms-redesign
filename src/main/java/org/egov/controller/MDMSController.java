@@ -3,13 +3,17 @@ package org.egov.controller;
 import digit.models.coremodels.mdms.MdmsCriteriaReq;
 import digit.models.coremodels.mdms.MdmsResponse;
 import net.minidev.json.JSONArray;
-import org.egov.models.*;
+import org.egov.models.MDMSRequest;
+import org.egov.models.MDMSResponse;
+import org.egov.models.MDMSSchemaRequest;
+import org.egov.models.MasterConfigRequest;
 import org.egov.service.JsonValidationService;
 import org.egov.service.MDMSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
 import java.util.Map;
 
@@ -71,6 +75,7 @@ public class MDMSController {
     public ResponseEntity<MDMSSchemaRequest> createMasterDataSchema(@RequestBody MDMSSchemaRequest request) {
         return new ResponseEntity<>(validationService.createMasterDataSchema(request), HttpStatus.OK);
     }
+
     @RequestMapping(value = "/_update/schema", method = RequestMethod.POST)
     public ResponseEntity<MDMSSchemaRequest> updatedMasterDataSchema(@RequestBody MDMSSchemaRequest request) {
         return new ResponseEntity<>(validationService.updateMasterDataSchema(request), HttpStatus.OK);

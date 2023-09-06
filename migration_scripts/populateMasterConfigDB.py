@@ -27,15 +27,13 @@ def populateDBWithMasterConfigData(masterConfigMap, defaultPayload):
         for masterName in module.keys():
             id += 1
             configData = module[masterName]
-            configPayload["id"] = str(id)
+
             for key, value in configData.items():
                 configPayload[key] = value
 
             defaultPayload["MDMSConfig"] = configPayload
             payload = json.dumps(defaultPayload)
 
-            # if id > 10:
-            #     exit()
             response = requests.request("POST", url, headers=headers, data=payload)
 
             if response.status_code == 400:

@@ -40,7 +40,6 @@ def readFiles(mdmsPath, defaultPayload):
                         if mdmsData != None:
                             try:
                                 defaultPayload["MDMSData"] = {
-                                    "id": str(id),
                                     "tenantId": tenantId,
                                     "moduleName": moduleName,
                                     "masterName": masterName,

@@ -27,11 +27,7 @@ public class MDMSRepository {
     }
 
     public boolean existsByTenantId(String tenantId) {
-        String query = "SELECT CASE WHEN EXISTS (\n" +
-                "    SELECT 1\n" +
-                "    FROM master_data\n" +
-                "    WHERE tenant_id = ?\n" +
-                ") THEN TRUE ELSE FALSE END";
+        String query = "SELECT CASE WHEN EXISTS (\n" + "    SELECT 1\n" + "    FROM master_data\n" + "    WHERE tenant_id = ?\n" + ") THEN TRUE ELSE FALSE END";
 
         boolean response = jdbcTemplate.queryForObject(query, new Object[]{tenantId}, Boolean.class);
         return response;
@@ -39,11 +35,7 @@ public class MDMSRepository {
 
     public boolean existsByTenantIdAndModuleName(String tenantId, String moduleName) {
 
-        String query = "SELECT CASE WHEN EXISTS (\n" +
-                "    SELECT 1\n" +
-                "    FROM master_data\n" +
-                "    WHERE tenant_id = ? AND module_name = ? \n" +
-                ") THEN TRUE ELSE FALSE END";
+        String query = "SELECT CASE WHEN EXISTS (\n" + "    SELECT 1\n" + "    FROM master_data\n" + "    WHERE tenant_id = ? AND module_name = ? \n" + ") THEN TRUE ELSE FALSE END";
         boolean response = jdbcTemplate.queryForObject(query, new Object[]{tenantId, moduleName}, Boolean.class);
         return response;
     }

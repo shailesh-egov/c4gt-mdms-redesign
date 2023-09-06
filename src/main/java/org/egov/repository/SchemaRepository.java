@@ -14,7 +14,7 @@ public class SchemaRepository {
     public MDMSSchema findByMasterName(String masterName) {
         String query = "SELECT * FROM master_data_schemas WHERE master_name = ?";
 
-        MDMSSchema response = jdbcTemplate.queryForObject(query, new Object[] { masterName }, new SchemaRowMapper());
+        MDMSSchema response = jdbcTemplate.queryForObject(query, new Object[]{masterName}, new SchemaRowMapper());
         return response;
     }
 

@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -14,12 +16,14 @@ import javax.validation.Valid;
 @Valid
 public class MasterConfig {
     @JsonProperty("id")
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
     @JsonProperty("moduleName")
+    @NotNull(message = "moduleName cannot be null")
     private String moduleName;
 
     @JsonProperty("masterName")
+    @NotNull(message = "masterName cannot be null")
     private String masterName;
 
     @JsonProperty("isStateLevel")
