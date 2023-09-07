@@ -1,11 +1,14 @@
-import os
+from genson import SchemaBuilder
 from dotenv import load_dotenv
-import sys
-import json
+import json, sys, os, io
 import requests
 import json
+from dotenv import load_dotenv
+import sys
 
-url = "http://localhost:8031/mdms/v1/_create"
+generatedSchemas = {}
+url = "http://localhost:8031/mdms/v1/_create/schema"
+headers = {"Content-Type": "application/json"}
 
 id = 0
 failCount = 0
@@ -13,17 +16,14 @@ failCount = 0
 
 def readFiles(mdmsPath, defaultPayload):
     """
-    Reads master data  from the given directory and populates relational database with the same
-
+    Generates master data schemas used for validation by reading existig master data json files
+    And populates the database with the same
     Args:
-        mdmsPath (String): A path where master data files are present in JSON format
-        payload (Object): A predefined payload object with things other than master data.
+        mdmsPath (String): Directory where the master data is stored
+        defaultPayload (Dict): Common Payload
     """
-    global id
-    global failCount
     for tenantId in os.listdir(mdmsPath):
         modulesPath = mdmsPath + "/" + tenantId
-
         for moduleName in os.listdir(modulesPath):
             masterPath = modulesPath + "/" + moduleName
             for root, dirs, files in os.walk(masterPath):
@@ -31,7 +31,6 @@ def readFiles(mdmsPath, defaultPayload):
                     if file.endswith(".json"):
                         filePath = os.path.join(root, file)
 
-                        id += 1
                         mdmsData = getFileData(filePath)
                         masterName = getMasterName(mdmsData)
 
@@ -39,35 +38,14 @@ def readFiles(mdmsPath, defaultPayload):
 
                         if mdmsData != None:
                             try:
-                                defaultPayload["MDMSData"] = {
-                                    "tenantId": tenantId,
-                                    "moduleName": moduleName,
-                                    "masterName": masterName,
-                                    "masterData": mdmsData,
-                                }
-                                payload = json.dumps(defaultPayload)
-                                headers = {"Content-Type": "application/json"}
-
-                                response = requests.request(
-                                    "POST", url, headers=headers, data=payload
+                                createJsonSchema(
+                                    mdmsData,
+                                    masterName,
+                                    defaultPayload,
                                 )
-
-                                if response.status_code == 400:
-                                    failCount += 1
-                                    print(
-                                        "Failed for this ID:",
-                                        id,
-                                        " masterName: ",
-                                        masterName,
-                                        " in module : ",
-                                        moduleName,
-                                        " for tenantId : ",
-                                        tenantId,
-                                    )
-                                    print(" Error : ", response.text)
-
+                                # print("Schema generated ".format(filePath))
                             except Exception as ex:
-                                print("MDMS request failed")
+                                print("Schema feneration failed !")
                                 print(ex)
 
 
@@ -112,19 +90,50 @@ def getMasterName(data):
     return masterName
 
 
+def createJsonSchema(data, masterName, defaultPayload):
+    """
+    Builds schemas from given master data and writes them to the database
+
+    Args:
+        masterData (Object): Master data object
+        masterName (String): Name of the master data object used to name the schema file for respective schema
+        defaultPayload: (Dict): Common Payload
+    """
+    global failCount
+    global id
+    global generatedSchemas
+
+    try:
+        if masterName not in generatedSchemas:
+            builder = SchemaBuilder(schema_uri="http://json-schema.org/draft-07/schema")
+            builder.add_object(data)
+            schema = builder.to_schema()
+            id += 1
+            schemaPayload = {
+                "masterName": masterName,
+                "masterDataSchema": schema,
+            }
+            defaultPayload["MDMSSchema"] = schemaPayload
+
+            payload = json.dumps(defaultPayload)
+
+            response = requests.request("POST", url, headers=headers, data=payload)
+
+            if response.status_code == 400:
+                failCount += 1
+                print(
+                    "Failed for this ID:",
+                    id,
+                    " masterName: ",
+                    masterName,
+                )
+            else:
+                generatedSchemas[masterName] = 1
+    except Exception as ex:
+        raise ex
+
+
 if __name__ == "__main__":
-    load_dotenv()
-    path = None
-    mdmsPath = os.getenv("MDMS_DATA_PATH")
-
-    if len(sys.argv) > 1:
-        path = sys.argv[1]
-    elif mdmsPath != None:
-        path = mdmsPath
-    else:
-        print("Please provide mdms path")
-        sys.exit()
-
     defaultPayload = {
         "RequestInfo": {
             "apiId": "Rainmaker",
@@ -157,8 +166,24 @@ if __name__ == "__main__":
             },
         },
     }
+    """
+    Reading env variables
+    """
+    load_dotenv()
+    path = None
+    mdmsPath = os.getenv("MDMS_DATA_PATH")
 
-    # Read and populate functionality
-    readFiles(path, defaultPayload)
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+    elif mdmsPath != None:
+        path = mdmsPath
+    else:
+        print("Please provide mdms path")
+        sys.exit()
 
-    print("\n\nFinal count: ", id, "  failcount: ", failCount)
+    """
+    Populate schemas functionality
+    """
+    readFiles(mdmsPath, defaultPayload)
+
+    print("\n\nFinal count: ", id + 1, "  failcount: ", failCount)

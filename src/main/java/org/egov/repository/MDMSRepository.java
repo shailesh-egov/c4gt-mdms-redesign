@@ -39,5 +39,7 @@ public class MDMSRepository {
         boolean response = jdbcTemplate.queryForObject(query, new Object[]{tenantId, moduleName}, Boolean.class);
         return response;
     }
+
+
 }
 

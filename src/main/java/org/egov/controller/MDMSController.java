@@ -30,7 +30,12 @@ public class MDMSController {
     @RequestMapping(value = "/_create", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> createMDMSData(@RequestBody MDMSRequest request) {
 
-        validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        try {
+            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        } catch (Exception e) {
+            throw new RuntimeException("Validation Error: ", e);
+        }
+
         MDMSResponse mdmsResponse = mdmsService.createMDMSData(request);
         return new ResponseEntity<>(mdmsResponse, HttpStatus.CREATED);
     }
@@ -53,24 +58,15 @@ public class MDMSController {
     @RequestMapping(value = "/_update", method = RequestMethod.POST)
     public ResponseEntity<MDMSResponse> updateMDMSData(@RequestBody MDMSRequest request) {
 
-        validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        try {
+            validationService.validateMasterDataSchema(request.getMdmsData().getMasterName(), request.getMdmsData().getMasterData());
+        } catch (Exception e) {
+            throw new RuntimeException("Validation Error: ", e);
+        }
         MDMSResponse mdmsResponse = mdmsService.updateMDMSData(request);
         return new ResponseEntity<>(mdmsResponse, HttpStatus.OK);
     }
-
-    @RequestMapping(value = "/_delete/{id}", method = RequestMethod.POST)
-    public ResponseEntity<String> deleteMasterData(@PathVariable int id) {
-
-        try {
-            String message = "Master data deleted " + mdmsService.deleteMDMSData(id);
-            return new ResponseEntity<>(message, HttpStatus.OK);
-        } catch (Exception e) {
-            String message = "Master data ID not present";
-            return new ResponseEntity<>(message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-    }
-
+    
     @RequestMapping(value = "/_create/schema", method = RequestMethod.POST)
     public ResponseEntity<MDMSSchemaRequest> createMasterDataSchema(@RequestBody MDMSSchemaRequest request) {
         return new ResponseEntity<>(validationService.createMasterDataSchema(request), HttpStatus.OK);
